@@ -1,0 +1,823 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ATÖLYE — Fine Art Baskı</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;1,300;1,400&family=Montserrat:wght@200;300;400&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --cream: #f4f0eb;
+    --dark: #1a1814;
+    --warm-gray: #8a8279;
+    --accent: #c8b89a;
+    --paper: #ede8e0;
+  }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    font-family: 'Montserrat', sans-serif;
+    background: var(--cream);
+    color: var(--dark);
+    cursor: none;
+    overflow-x: hidden;
+  }
+
+  /* Custom cursor */
+  .cursor {
+    position: fixed;
+    width: 8px; height: 8px;
+    background: var(--dark);
+    border-radius: 50%;
+    pointer-events: none;
+    z-index: 9999;
+    transition: transform 0.15s ease;
+    transform: translate(-50%, -50%);
+  }
+  .cursor-ring {
+    position: fixed;
+    width: 36px; height: 36px;
+    border: 1px solid var(--dark);
+    border-radius: 50%;
+    pointer-events: none;
+    z-index: 9998;
+    transition: transform 0.4s ease, width 0.3s, height 0.3s, opacity 0.3s;
+    transform: translate(-50%, -50%);
+    opacity: 0.4;
+  }
+
+  /* NAV */
+  nav {
+    position: fixed;
+    top: 0; left: 0; right: 0;
+    z-index: 100;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 28px 52px;
+    mix-blend-mode: multiply;
+  }
+
+  .nav-logo {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 22px;
+    font-weight: 300;
+    letter-spacing: 0.25em;
+    text-transform: uppercase;
+    color: var(--dark);
+    text-decoration: none;
+  }
+
+  .nav-links {
+    display: flex;
+    gap: 44px;
+    list-style: none;
+  }
+
+  .nav-links a {
+    font-size: 10px;
+    font-weight: 300;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--dark);
+    text-decoration: none;
+    position: relative;
+    opacity: 0.7;
+    transition: opacity 0.3s;
+  }
+
+  .nav-links a::after {
+    content: '';
+    position: absolute;
+    bottom: -4px; left: 0; right: 0;
+    height: 1px;
+    background: var(--dark);
+    transform: scaleX(0);
+    transform-origin: left;
+    transition: transform 0.4s ease;
+  }
+
+  .nav-links a:hover { opacity: 1; }
+  .nav-links a:hover::after { transform: scaleX(1); }
+
+  /* HERO SLIDESHOW */
+  .hero {
+    position: relative;
+    height: 100vh;
+    overflow: hidden;
+  }
+
+  .slides {
+    position: absolute;
+    inset: 0;
+    display: flex;
+  }
+
+  .slide {
+    position: absolute;
+    inset: 0;
+    opacity: 0;
+    transition: opacity 1.8s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  .slide.active { opacity: 1; }
+
+  .slide-img {
+    width: 100%; height: 100%;
+    object-fit: cover;
+    filter: brightness(0.88) contrast(1.05);
+  }
+
+  /* Placeholder slides with gradient backgrounds */
+  .slide-1 { background: linear-gradient(135deg, #2c2416 0%, #5a4a32 40%, #8b7355 100%); }
+  .slide-2 { background: linear-gradient(135deg, #1a2030 0%, #2d3d52 40%, #4a6080 100%); }
+  .slide-3 { background: linear-gradient(135deg, #1e1a18 0%, #3d3428 50%, #6b5a42 100%); }
+  .slide-4 { background: linear-gradient(160deg, #252018 0%, #4a3c28 60%, #7a6848 100%); }
+
+  .slide-inner {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: flex-end;
+    padding: 60px 52px;
+  }
+
+  .slide-caption {
+    color: rgba(244,240,235,0.85);
+    font-family: 'Cormorant Garamond', serif;
+    font-size: clamp(38px, 6vw, 80px);
+    font-weight: 300;
+    font-style: italic;
+    line-height: 1.05;
+    letter-spacing: -0.01em;
+    max-width: 600px;
+    opacity: 0;
+    transform: translateY(20px);
+    transition: opacity 1s ease 0.6s, transform 1s ease 0.6s;
+  }
+
+  .slide.active .slide-caption {
+    opacity: 1;
+    transform: translateY(0);
+  }
+
+  /* Grain overlay */
+  .hero::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='300'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='300' height='300' filter='url(%23n)' opacity='0.05'/%3E%3C/svg%3E");
+    pointer-events: none;
+    opacity: 0.5;
+    mix-blend-mode: multiply;
+  }
+
+  /* Slide indicators */
+  .slide-indicators {
+    position: absolute;
+    bottom: 36px;
+    right: 52px;
+    display: flex;
+    gap: 10px;
+    z-index: 10;
+  }
+
+  .indicator {
+    width: 28px; height: 1px;
+    background: rgba(244,240,235,0.4);
+    cursor: pointer;
+    transition: background 0.4s, width 0.4s;
+  }
+
+  .indicator.active {
+    background: rgba(244,240,235,0.9);
+    width: 48px;
+  }
+
+  /* SIZE SECTION */
+  .size-section {
+    background: var(--cream);
+    padding: 100px 52px;
+    position: relative;
+  }
+
+  .size-section::before {
+    content: 'BOYUTLAR';
+    position: absolute;
+    top: 32px; left: 52px;
+    font-size: 9px;
+    font-weight: 300;
+    letter-spacing: 0.35em;
+    color: var(--warm-gray);
+  }
+
+  .size-header {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: clamp(28px, 4vw, 52px);
+    font-weight: 300;
+    color: var(--dark);
+    margin-bottom: 12px;
+  }
+
+  .size-sub {
+    font-size: 11px;
+    font-weight: 300;
+    letter-spacing: 0.12em;
+    color: var(--warm-gray);
+    margin-bottom: 64px;
+  }
+
+  .size-grid {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 20px;
+  }
+
+  @media (max-width: 900px) {
+    .size-grid { grid-template-columns: repeat(3, 1fr); }
+    nav { padding: 24px 28px; }
+    .nav-links { gap: 28px; }
+    .size-section { padding: 80px 28px; }
+    .size-section::before { left: 28px; }
+    .size-header { margin-bottom: 10px; }
+    .slide-inner { padding: 60px 28px; }
+    .slide-indicators { right: 28px; }
+  }
+
+  @media (max-width: 600px) {
+    .size-grid { grid-template-columns: repeat(2, 1fr); }
+    nav { padding: 20px 20px; }
+    .nav-links { gap: 18px; }
+  }
+
+  .size-card {
+    background: var(--paper);
+    border: 1px solid transparent;
+    padding: 32px 20px 28px;
+    cursor: pointer;
+    transition: border-color 0.35s, background 0.35s, transform 0.35s;
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .size-card:hover, .size-card.selected {
+    border-color: var(--accent);
+    background: #fff;
+    transform: translateY(-3px);
+  }
+
+  .size-card.selected::after {
+    content: '✓';
+    position: absolute;
+    top: 14px; right: 14px;
+    font-size: 11px;
+    color: var(--accent);
+    font-family: 'Montserrat', sans-serif;
+    font-weight: 400;
+  }
+
+  .size-visual {
+    margin-bottom: 20px;
+    display: flex;
+    align-items: flex-end;
+    height: 70px;
+  }
+
+  .size-rect {
+    border: 1.5px solid var(--accent);
+    background: rgba(200,184,154,0.08);
+    transition: background 0.35s;
+  }
+
+  .size-card:hover .size-rect, .size-card.selected .size-rect {
+    background: rgba(200,184,154,0.2);
+  }
+
+  /* Proportional rectangles */
+  .rect-a5  { width: 26px; height: 37px; }
+  .rect-a4  { width: 32px; height: 45px; }
+  .rect-a3  { width: 40px; height: 57px; }
+  .rect-a2  { width: 50px; height: 70px; }
+  .rect-a2p { width: 50px; height: 70px; position: relative; }
+  .rect-a2p::after {
+    content: '+';
+    position: absolute;
+    top: -14px; right: -6px;
+    font-size: 14px;
+    color: var(--accent);
+  }
+
+  .size-label {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 22px;
+    font-weight: 400;
+    color: var(--dark);
+    margin-bottom: 4px;
+  }
+
+  .size-dims {
+    font-size: 9px;
+    font-weight: 300;
+    letter-spacing: 0.18em;
+    color: var(--warm-gray);
+    margin-bottom: 12px;
+    text-transform: uppercase;
+  }
+
+  .size-paper {
+    font-size: 8px;
+    font-weight: 300;
+    letter-spacing: 0.12em;
+    color: var(--accent);
+    text-transform: uppercase;
+    line-height: 1.5;
+  }
+
+  .size-cta {
+    margin-top: 56px;
+    display: flex;
+    align-items: center;
+    gap: 24px;
+  }
+
+  .btn-primary {
+    display: inline-block;
+    padding: 16px 40px;
+    background: var(--dark);
+    color: var(--cream);
+    font-size: 9px;
+    font-weight: 300;
+    letter-spacing: 0.25em;
+    text-transform: uppercase;
+    text-decoration: none;
+    border: 1px solid var(--dark);
+    transition: background 0.35s, color 0.35s;
+    cursor: pointer;
+  }
+
+  .btn-primary:hover {
+    background: transparent;
+    color: var(--dark);
+  }
+
+  .btn-ghost {
+    font-size: 9px;
+    font-weight: 300;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--warm-gray);
+    text-decoration: none;
+    border-bottom: 1px solid transparent;
+    padding-bottom: 2px;
+    transition: color 0.3s, border-color 0.3s;
+    cursor: pointer;
+  }
+
+  .btn-ghost:hover {
+    color: var(--dark);
+    border-color: var(--dark);
+  }
+
+  /* PAGES */
+  .page {
+    display: none;
+    min-height: 100vh;
+    padding: 140px 52px 80px;
+    animation: fadeUp 0.6s ease;
+  }
+
+  .page.active { display: block; }
+
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(16px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .page-eyebrow {
+    font-size: 9px;
+    font-weight: 300;
+    letter-spacing: 0.35em;
+    color: var(--warm-gray);
+    text-transform: uppercase;
+    margin-bottom: 20px;
+  }
+
+  .page-title {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: clamp(36px, 5vw, 72px);
+    font-weight: 300;
+    line-height: 1.05;
+    color: var(--dark);
+    margin-bottom: 48px;
+  }
+
+  .page-body {
+    max-width: 640px;
+    font-size: 13px;
+    font-weight: 300;
+    line-height: 1.9;
+    color: var(--dark);
+    opacity: 0.8;
+  }
+
+  .page-body p + p { margin-top: 20px; }
+
+  /* KIMIZ divider */
+  .divider {
+    width: 48px;
+    height: 1px;
+    background: var(--accent);
+    margin: 40px 0;
+  }
+
+  /* FILM BANYO section */
+  .process-steps {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 32px;
+    margin-top: 64px;
+  }
+
+  @media (max-width: 700px) {
+    .process-steps { grid-template-columns: 1fr; }
+    .page { padding: 130px 20px 60px; }
+  }
+
+  .step {
+    padding: 32px;
+    border: 1px solid rgba(138,130,121,0.2);
+    transition: border-color 0.35s;
+  }
+
+  .step:hover { border-color: var(--accent); }
+
+  .step-num {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 42px;
+    font-weight: 300;
+    color: var(--accent);
+    margin-bottom: 16px;
+    line-height: 1;
+  }
+
+  .step-title {
+    font-size: 10px;
+    font-weight: 400;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: var(--dark);
+    margin-bottom: 12px;
+  }
+
+  .step-body {
+    font-size: 12px;
+    font-weight: 300;
+    line-height: 1.8;
+    color: var(--warm-gray);
+  }
+
+  /* ILETISIM */
+  .contact-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 80px;
+    margin-top: 48px;
+  }
+
+  @media (max-width: 700px) {
+    .contact-grid { grid-template-columns: 1fr; gap: 40px; }
+  }
+
+  .contact-item { margin-bottom: 36px; }
+
+  .contact-label {
+    font-size: 8px;
+    font-weight: 400;
+    letter-spacing: 0.3em;
+    text-transform: uppercase;
+    color: var(--accent);
+    margin-bottom: 8px;
+  }
+
+  .contact-value {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 20px;
+    font-weight: 300;
+    color: var(--dark);
+  }
+
+  .contact-form input,
+  .contact-form textarea {
+    width: 100%;
+    background: transparent;
+    border: none;
+    border-bottom: 1px solid rgba(138,130,121,0.35);
+    padding: 14px 0;
+    font-family: 'Montserrat', sans-serif;
+    font-size: 12px;
+    font-weight: 300;
+    letter-spacing: 0.05em;
+    color: var(--dark);
+    outline: none;
+    margin-bottom: 28px;
+    transition: border-color 0.3s;
+    resize: none;
+  }
+
+  .contact-form input::placeholder,
+  .contact-form textarea::placeholder {
+    color: var(--warm-gray);
+    opacity: 0.7;
+  }
+
+  .contact-form input:focus,
+  .contact-form textarea:focus {
+    border-bottom-color: var(--dark);
+  }
+
+  /* FOOTER */
+  footer {
+    padding: 32px 52px;
+    border-top: 1px solid rgba(138,130,121,0.15);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  .footer-copy {
+    font-size: 9px;
+    font-weight: 300;
+    letter-spacing: 0.15em;
+    color: var(--warm-gray);
+  }
+
+  /* HOME page visibility */
+  #home { display: block; }
+  #home.active { display: block; }
+</style>
+</head>
+<body>
+
+<div class="cursor" id="cursor"></div>
+<div class="cursor-ring" id="cursorRing"></div>
+
+<!-- NAV -->
+<nav>
+  <a class="nav-logo" href="#" onclick="showPage('home')">Atölye</a>
+  <ul class="nav-links">
+    <li><a href="#" onclick="showPage('home')">Ana Sayfa</a></li>
+    <li><a href="#" onclick="showPage('kimiz')">Biz Kimiz</a></li>
+    <li><a href="#" onclick="showPage('film')">Film Banyo</a></li>
+    <li><a href="#" onclick="showPage('iletisim')">İletişim</a></li>
+  </ul>
+</nav>
+
+<!-- HOME PAGE -->
+<div id="home">
+
+  <!-- HERO SLIDESHOW -->
+  <section class="hero">
+    <div class="slides">
+      <div class="slide slide-1 active">
+        <div class="slide-inner">
+          <div class="slide-caption">Görüntünün<br>kalıcı hali.</div>
+        </div>
+      </div>
+      <div class="slide slide-2">
+        <div class="slide-inner">
+          <div class="slide-caption">Hahnemühle<br>kağıt üzerine.</div>
+        </div>
+      </div>
+      <div class="slide slide-3">
+        <div class="slide-inner">
+          <div class="slide-caption">Pigment mürekkep,<br>arşiv kalitesi.</div>
+        </div>
+      </div>
+      <div class="slide slide-4">
+        <div class="slide-inner">
+          <div class="slide-caption">Fine art baskı<br>atölyesi.</div>
+        </div>
+      </div>
+    </div>
+    <div class="slide-indicators" id="indicators"></div>
+  </section>
+
+  <!-- SIZE SECTION -->
+  <section class="size-section">
+    <h2 class="size-header">Baskı Boyutu Seçin</h2>
+    <p class="size-sub">Hahnemühle Photo Rag Etching · 310 g/m² · Pigment Mürekkep</p>
+
+    <div class="size-grid">
+      <div class="size-card" onclick="selectSize(this)">
+        <div class="size-visual"><div class="size-rect rect-a5"></div></div>
+        <div class="size-label">A5</div>
+        <div class="size-dims">148 × 210 mm</div>
+        <div class="size-paper">Hahnemühle<br>Etching</div>
+      </div>
+      <div class="size-card" onclick="selectSize(this)">
+        <div class="size-visual"><div class="size-rect rect-a4"></div></div>
+        <div class="size-label">A4</div>
+        <div class="size-dims">210 × 297 mm</div>
+        <div class="size-paper">Hahnemühle<br>Etching</div>
+      </div>
+      <div class="size-card" onclick="selectSize(this)">
+        <div class="size-visual"><div class="size-rect rect-a3"></div></div>
+        <div class="size-label">A3</div>
+        <div class="size-dims">297 × 420 mm</div>
+        <div class="size-paper">Hahnemühle<br>Etching</div>
+      </div>
+      <div class="size-card" onclick="selectSize(this)">
+        <div class="size-visual"><div class="size-rect rect-a2"></div></div>
+        <div class="size-label">A2</div>
+        <div class="size-dims">420 × 594 mm</div>
+        <div class="size-paper">Hahnemühle<br>Etching</div>
+      </div>
+      <div class="size-card" onclick="selectSize(this)">
+        <div class="size-visual"><div class="size-rect rect-a2p"></div></div>
+        <div class="size-label">A2+</div>
+        <div class="size-dims">432 × 610 mm</div>
+        <div class="size-paper">Hahnemühle<br>Etching</div>
+      </div>
+    </div>
+
+    <div class="size-cta">
+      <button class="btn-primary" onclick="showPage('iletisim')">Teklif Al</button>
+      <a class="btn-ghost" href="#" onclick="showPage('kimiz')">Nasıl çalışıyoruz →</a>
+    </div>
+  </section>
+
+  <footer>
+    <span class="footer-copy">© 2026 Atölye Fine Art Baskı</span>
+    <span class="footer-copy">İstanbul</span>
+  </footer>
+
+</div>
+
+<!-- BİZ KİMİZ PAGE -->
+<div id="kimiz" class="page">
+  <div class="page-eyebrow">Hakkımızda</div>
+  <h1 class="page-title">Görüntüye<br>saygı duyan<br>bir atölye.</h1>
+  <div class="divider"></div>
+  <div class="page-body">
+    <p>Fine art baskı, fotoğrafçı ile kağıt arasındaki bir diyalogdur. Her görüntü kendi rengini, kontrastını ve dokusunu taşır. Bizim işimiz bu özü korumak, hatta güçlendirmektir.</p>
+    <p>Hahnemühle etching kağıdı ve pigment mürekkep kullanarak arşiv kalitesinde çıktılar üretiyoruz. Her iş tek tek değerlendirilir; renk profilleme, yumuşak provalama ve müşteri onayı süreç ayrılmaz parçalarıdır.</p>
+    <p>İstanbul'da bağımsız bir atölye olarak hem bireysel sanatçılara hem kurumsal koleksiyonlara hizmet veriyoruz.</p>
+  </div>
+  <footer style="margin-top:80px; padding: 32px 0;">
+    <span class="footer-copy">© 2026 Atölye Fine Art Baskı</span>
+    <span class="footer-copy">İstanbul</span>
+  </footer>
+</div>
+
+<!-- FİLM BANYO PAGE -->
+<div id="film" class="page">
+  <div class="page-eyebrow">Film Banyo Hizmeti</div>
+  <h1 class="page-title">Analog<br>sürecin<br>titizliği.</h1>
+  <div class="page-body">
+    <p>35mm ve orta format film banyo hizmeti sunuyoruz. Her film, maruz kalma bilgisi ve beklentilerinize göre ayrı ayrı değerlendirilir.</p>
+  </div>
+
+  <div class="process-steps">
+    <div class="step">
+      <div class="step-num">01</div>
+      <div class="step-title">Teslimat</div>
+      <div class="step-body">Filminizi elden ya da kargo ile bize ulaştırın. Her film bir ID ile kayıt altına alınır.</div>
+    </div>
+    <div class="step">
+      <div class="step-num">02</div>
+      <div class="step-title">Banyo</div>
+      <div class="step-body">B&W, C-41 veya E-6 prosesler. Sıcaklık kontrollü, tutarlı kimyasal döngüleri ile.</div>
+    </div>
+    <div class="step">
+      <div class="step-num">03</div>
+      <div class="step-title">Tarama & Teslim</div>
+      <div class="step-body">Yüksek çözünürlüklü tarama seçeneği. Dijital dosyalar ve negatifler birlikte teslim edilir.</div>
+    </div>
+  </div>
+
+  <footer style="margin-top:80px; padding: 32px 0;">
+    <span class="footer-copy">© 2026 Atölye Fine Art Baskı</span>
+    <span class="footer-copy">İstanbul</span>
+  </footer>
+</div>
+
+<!-- İLETİŞİM PAGE -->
+<div id="iletisim" class="page">
+  <div class="page-eyebrow">İletişim</div>
+  <h1 class="page-title">Konuşalım.</h1>
+
+  <div class="contact-grid">
+    <div>
+      <div class="contact-item">
+        <div class="contact-label">E-posta</div>
+        <div class="contact-value">info@atolye.com.tr</div>
+      </div>
+      <div class="contact-item">
+        <div class="contact-label">Telefon</div>
+        <div class="contact-value">+90 212 000 00 00</div>
+      </div>
+      <div class="contact-item">
+        <div class="contact-label">Adres</div>
+        <div class="contact-value">Karaköy, İstanbul</div>
+      </div>
+    </div>
+
+    <div class="contact-form">
+      <input type="text" placeholder="Adınız">
+      <input type="email" placeholder="E-posta adresiniz">
+      <textarea rows="4" placeholder="Mesajınız veya baskı talebiniz…"></textarea>
+      <button class="btn-primary">Gönder</button>
+    </div>
+  </div>
+
+  <footer style="margin-top:80px; padding: 32px 0;">
+    <span class="footer-copy">© 2026 Atölye Fine Art Baskı</span>
+    <span class="footer-copy">İstanbul</span>
+  </footer>
+</div>
+
+<script>
+  // Custom cursor
+  const cursor = document.getElementById('cursor');
+  const ring = document.getElementById('cursorRing');
+  let mx = 0, my = 0, rx = 0, ry = 0;
+
+  document.addEventListener('mousemove', e => {
+    mx = e.clientX; my = e.clientY;
+    cursor.style.left = mx + 'px';
+    cursor.style.top = my + 'px';
+  });
+
+  function animateRing() {
+    rx += (mx - rx) * 0.12;
+    ry += (my - ry) *.12;
+    ring.style.left = rx + 'px';
+    ring.style.top = ry + 'px';
+    requestAnimationFrame(animateRing);
+  }
+  animateRing();
+
+  document.querySelectorAll('a, button, .size-card, .indicator').forEach(el => {
+    el.addEventListener('mouseenter', () => {
+      ring.style.width = '56px'; ring.style.height = '56px'; ring.style.opacity = '0.2';
+    });
+    el.addEventListener('mouseleave', () => {
+      ring.style.width = '36px'; ring.style.height = '36px'; ring.style.opacity = '0.4';
+    });
+  });
+
+  // SLIDESHOW
+  const slides = document.querySelectorAll('.slide');
+  const indicatorsEl = document.getElementById('indicators');
+  let current = 0;
+  let timer;
+
+  slides.forEach((_, i) => {
+    const dot = document.createElement('div');
+    dot.className = 'indicator' + (i === 0 ? ' active' : '');
+    dot.addEventListener('click', () => goTo(i));
+    indicatorsEl.appendChild(dot);
+  });
+
+  function goTo(n) {
+    slides[current].classList.remove('active');
+    indicatorsEl.children[current].classList.remove('active');
+    current = (n + slides.length) % slides.length;
+    slides[current].classList.add('active');
+    indicatorsEl.children[current].classList.add('active');
+    clearInterval(timer);
+    timer = setInterval(advance, 5000);
+  }
+
+  function advance() { goTo(current + 1); }
+  timer = setInterval(advance, 5000);
+
+  // PAGE NAV
+  function showPage(id) {
+    document.getElementById('home').style.display = 'none';
+    document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+
+    if (id === 'home') {
+      document.getElementById('home').style.display = 'block';
+    } else {
+      const p = document.getElementById(id);
+      if (p) { p.classList.add('active'); }
+    }
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+    return false;
+  }
+
+  // SIZE CARD SELECT
+  function selectSize(card) {
+    document.querySelectorAll('.size-card').forEach(c => c.classList.remove('selected'));
+    card.classList.add('selected');
+  }
+</script>
+</body>
+</html>
