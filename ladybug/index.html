@@ -1,0 +1,58 @@
+<!doctype html>
+<html lang="tr">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Ladybug</title>
+    <link rel="stylesheet" href="/src/ui/style.css" />
+  </head>
+  <body>
+    <div id="app">
+      <header>
+        <h1>Ladybug</h1>
+        <p class="subtitle">Şarkı yükle, mod/duygu analizine göre üretilen minimal klibi izle ve dışa aktar.</p>
+      </header>
+
+      <section id="upload-panel">
+        <label class="file-drop" for="audio-input">
+          <span id="file-drop-label">Bir ses dosyası seç ya da sürükle bırak (mp3, wav, ogg…)</span>
+          <input type="file" id="audio-input" accept="audio/*" />
+        </label>
+        <div id="analysis-status" class="status" hidden>
+          <div class="progress-bar"><div id="progress-fill"></div></div>
+          <span id="progress-label"></span>
+        </div>
+      </section>
+
+      <section id="stage-panel" hidden>
+        <div id="stage-wrapper">
+          <canvas id="stage" width="960" height="540"></canvas>
+          <canvas id="layer-butterchurn" width="960" height="540" class="offscreen"></canvas>
+          <canvas id="layer-particles" width="960" height="540" class="offscreen"></canvas>
+          <canvas id="layer-figure" width="960" height="540" class="offscreen"></canvas>
+        </div>
+
+        <audio id="audio-el" controls></audio>
+
+        <div id="controls">
+          <button id="export-btn">Klip olarak dışa aktar (webm)</button>
+          <span id="export-status"></span>
+        </div>
+
+        <details id="mood-panel">
+          <summary>Analiz sonuçları</summary>
+          <dl id="mood-list"></dl>
+        </details>
+
+        <details id="lyrics-panel">
+          <summary>Söz analizi (opsiyonel, LLM)</summary>
+          <textarea id="lyrics-input" placeholder="Şarkı sözünü buraya yapıştır…" rows="4"></textarea>
+          <input type="password" id="api-key-input" placeholder="Anthropic API anahtarı (sadece tarayıcında saklanır)" />
+          <button id="analyze-lyrics-btn">Söz duygu tonunu analiz et</button>
+          <span id="lyrics-status"></span>
+        </details>
+      </section>
+    </div>
+    <script type="module" src="/src/main.js"></script>
+  </body>
+</html>
