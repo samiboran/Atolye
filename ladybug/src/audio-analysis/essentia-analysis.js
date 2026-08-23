@@ -41,16 +41,23 @@ export class AudioAnalyzer {
     const mono = downmixToMono(audioBuffer);
     await audioCtx.close();
 
-    onProgress(0.2, 'özellikler çıkarılıyor');
     const vector = this.essentia.arrayToVector(mono);
-
     const sampleRate = audioBuffer.sampleRate;
 
+    // Every step below yields back to the browser between calls (via
+    // `yieldToUI()`) so the progress bar actually repaints and the tab
+    // doesn't look frozen on a long track - without it, a full song's
+    // worth of analysis runs as one uninterrupted synchronous block and
+    // the UI appears stuck (no player ever shows up) until it's all done.
+
+    onProgress(0.15, 'tempo tespit ediliyor');
+    await yieldToUI();
     // --- Rhythm / tempo ---
     const rhythm = this.essentia.RhythmExtractor2013(vector, 208, 'multifeature', 40);
     const tempo = rhythm.bpm;
 
-    onProgress(0.45, 'enerji zaman çizelgesi hesaplanıyor');
+    onProgress(0.3, 'enerji zaman çizelgesi hesaplanıyor');
+    await yieldToUI();
     // RMS-per-frame envelope, reused both as the scalar "energy" feature
     // (mean RMS) and, max-normalized, as the timeline's energy curve.
     // (Essentia's own `Loudness` algorithm sums over the *entire* signal
@@ -62,13 +69,21 @@ export class AudioAnalyzer {
     // maps to roughly 0.3-1.0 energy, with quieter material trailing below.
     const energy = clamp01(meanRms / 0.3);
 
+    onProgress(0.45, 'dinamik karmaşıklık hesaplanıyor');
+    await yieldToUI();
     // --- Dynamic complexity ---
     const dynComplexity = this.essentia.DynamicComplexity(vector, undefined, sampleRate);
     const complexity = clamp01(dynComplexity.dynamicComplexity / 4);
 
-    // --- Spectral centroid (time-averaged across frames) ---
-    const spectralCentroid = this.computeMeanSpectralCentroid(mono, sampleRate);
+    // --- Spectral centroid (time-averaged across a bounded, evenly spaced
+    // sample of frames - see computeMeanSpectralCentroid for why not every
+    // frame in the track is visited) ---
+    const spectralCentroid = await this.computeMeanSpectralCentroid(mono, sampleRate, (p) =>
+      onProgress(0.55 + p * 0.3, 'tını rengi analiz ediliyor')
+    );
 
+    onProgress(0.9, 'dans edilebilirlik hesaplanıyor');
+    await yieldToUI();
     // --- Danceability ---
     const dance = this.essentia.Danceability(vector, undefined, undefined, sampleRate);
     // Essentia's danceability is unbounded (DFA based), squash to 0..1.
@@ -95,25 +110,45 @@ export class AudioAnalyzer {
     };
   }
 
-  computeMeanSpectralCentroid(mono, sampleRate) {
+  /**
+   * Averages spectral centroid over a bounded, evenly-spaced sample of
+   * frames across the whole track (at most MAX_FRAMES), rather than every
+   * hop of the track - a dense frame-by-frame pass over a multi-minute
+   * song makes thousands of individual WASM calls and blocks the main
+   * thread for many seconds to over a minute with no way to yield mid-call.
+   * A few hundred evenly spread samples give an equally representative
+   * average for a single track-level scalar feature, in a fraction of the
+   * time, and the loop yields periodically so the tab stays responsive.
+   */
+  async computeMeanSpectralCentroid(mono, sampleRate, onProgress = () => {}) {
     const frameSize = 2048;
-    const hopSize = 1024;
+    const MAX_FRAMES = 300;
+    const YIELD_EVERY = 25;
+
+    const maxStart = mono.length - frameSize;
+    if (maxStart <= 0) return 0;
+    const frameCount = Math.min(MAX_FRAMES, Math.max(1, Math.floor(maxStart / frameSize) + 1));
+    const step = frameCount > 1 ? maxStart / (frameCount - 1) : 0;
+
     let sum = 0;
-    let count = 0;
-    for (let i = 0; i + frameSize <= mono.length; i += hopSize) {
-      const frame = mono.subarray(i, i + frameSize);
+    for (let f = 0; f < frameCount; f++) {
+      const start = Math.round(f * step);
+      const frame = mono.subarray(start, start + frameSize);
       const frameVec = this.essentia.arrayToVector(applyHann(frame));
       const spectrum = this.essentia.Spectrum(frameVec);
       const centroid = this.essentia.Centroid(spectrum.spectrum, sampleRate / 2);
       sum += centroid.centroid;
-      count++;
       frameVec.delete();
       spectrum.spectrum.delete();
+
+      if (f % YIELD_EVERY === 0) {
+        onProgress(f / frameCount);
+        await yieldToUI();
+      }
     }
-    if (count === 0) return 0;
     // Centroid comes back normalized 0..1 (fraction of Nyquist) from Essentia's
     // Centroid algorithm given range=sampleRate/2; keep as 0..1.
-    return clamp01(sum / count);
+    return clamp01(sum / frameCount);
   }
 
   /**
@@ -138,6 +173,10 @@ export class AudioAnalyzer {
     for (let f = 0; f < frames; f++) energyCurve[f] = rawRmsCurve[f] / max;
     return { rawRmsCurve, energyCurve, frameHopSeconds: hop / sampleRate };
   }
+}
+
+function yieldToUI() {
+  return new Promise((resolve) => setTimeout(resolve, 0));
 }
 
 function downmixToMono(audioBuffer) {
