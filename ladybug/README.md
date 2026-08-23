@@ -1,4 +1,4 @@
-# music-visual-generator
+# ladybug
 
 Şarkı yükleyince mod/duygu verisine göre minimal, abstract bir klip üreten
 tarayıcı tabanlı sistem. Winamp/MilkDrop ruhunda, nokta bulutu figürlerle
@@ -17,7 +17,7 @@ Mapping detayları için → [`docs/mood-visual-mapping.md`](docs/mood-visual-ma
 ## Kullanım
 
 ```bash
-cd music-visual-generator
+cd ladybug
 npm install
 npm run dev      # http://localhost:5173
 npm run build    # dist/ altına production build

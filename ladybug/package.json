@@ -1,5 +1,5 @@
 {
-  "name": "music-visual-generator",
+  "name": "ladybug",
   "version": "0.1.0",
   "description": "Sarki yukleyince mod/duygu verisine gore minimal, abstract bir klip ureten tarayici tabanli sistem.",
   "type": "module",
